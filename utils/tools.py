@@ -360,7 +360,7 @@ async def send_request(url: str, method: str, headers: Dict[str, Any], data: Dic
     """
     发请求的通用方法
     """
-    async with aiohttp.ClientSession() as session:
+    async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=False)) as session:
         async with session.request(method, url=url, json=data, headers=headers, **kwargs) as response:
             return await response.json()
 
