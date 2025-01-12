@@ -15,7 +15,7 @@ from typing import Dict, Any
 from utils.consts import supported_colors
 
 
-def get_tmp_dir(tmp_dir:str = './tmp'):
+def get_tmp_dir(tmp_dir: str = './tmp'):
     # 检查并创建 tmp 目录（如果不存在）
     if not os.path.exists(tmp_dir):
         os.makedirs(tmp_dir)
@@ -165,13 +165,16 @@ async def new_solve_slider_captcha(page, slider, distance, slide_difference):
     # 等待滑块元素出现
     distance = distance + slide_difference
     box = await slider.bounding_box()
-    await page.mouse.move(box['x'] + 10 , box['y'] + 10)
+    await page.mouse.move(box['x'] + 10, box['y'] + 10)
     await page.mouse.down()  # 模拟鼠标按下
-    await page.mouse.move(box['x'] + distance + random.uniform(8, 25), box['y'], steps=10)  # 模拟鼠标拖动，考虑到实际操作中可能存在的轻微误差和波动，加入随机偏移量
+    # 模拟鼠标拖动，考虑到实际操作中可能存在的轻微误差和波动，加入随机偏移量
+    await page.mouse.move(box['x'] + distance + random.uniform(8, 25), box['y'], steps=10)
     await asyncio.sleep(random.randint(1, 5) / 10)  # 随机等待一段时间，模仿人类操作的不确定性
-    await page.mouse.move(box['x'] + distance, box['y'], steps=10)  # 继续拖动滑块到目标位置
+    # 继续拖动滑块到目标位置
+    await page.mouse.move(box['x'] + distance, box['y'], steps=10)
     await page.mouse.up()  # 模拟鼠标释放，完成滑块拖动
     await asyncio.sleep(3)  # 等待3秒，等待滑块验证结果
+
 
 def sort_rectangle_vertices(vertices):
     """
@@ -206,7 +209,8 @@ def get_shape_location_by_type(img_path, type: str):
     imgGray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)  # 转灰度图
     imgBlur = cv2.GaussianBlur(imgGray, (5, 5), 1)  # 高斯模糊
     imgCanny = cv2.Canny(imgBlur, 60, 60)  # Canny算子边缘检测
-    contours, hierarchy = cv2.findContours(imgCanny, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)  # 寻找轮廓点
+    contours, hierarchy = cv2.findContours(
+        imgCanny, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)  # 寻找轮廓点
     for obj in contours:
         perimeter = cv2.arcLength(obj, True)  # 计算轮廓周长
         approx = cv2.approxPolyDP(obj, 0.02 * perimeter, True)  # 获取轮廓角点坐标
@@ -220,7 +224,8 @@ def get_shape_location_by_type(img_path, type: str):
             if w == h:
                 obj_type = "正方形"
             else:
-                approx = sort_rectangle_vertices([vertex[0] for vertex in approx])
+                approx = sort_rectangle_vertices(
+                    [vertex[0] for vertex in approx])
                 if is_trapezoid(approx):
                     obj_type = "梯形"
                 else:
@@ -260,7 +265,8 @@ def get_shape_location_by_color(img_path, target_color):
 
     # 创建掩码并找到轮廓
     mask = cv2.inRange(hsv_image, lower, upper)
-    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contours, _ = cv2.findContours(
+        mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     # 遍历轮廓并在中心点画点
     for contour in contours:
@@ -349,7 +355,7 @@ def expand_coordinates(x1, y1, x2, y2, N):
     return new_x1, new_y1, new_x2, new_y2
 
 
-def cv2_save_img(img_name, img, tmp_dir:str = './tmp'):
+def cv2_save_img(img_name, img, tmp_dir: str = './tmp'):
     tmp_dir = get_tmp_dir(tmp_dir)
     img_path = os.path.join(tmp_dir, f'{img_name}.png')
     cv2.imwrite(img_path, img)
@@ -360,7 +366,7 @@ async def send_request(url: str, method: str, headers: Dict[str, Any], data: Dic
     """
     发请求的通用方法
     """
-    async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=False)) as session:
+    async with aiohttp.ClientSession() as session:
         async with session.request(method, url=url, json=data, headers=headers, **kwargs) as response:
             return await response.json()
 
